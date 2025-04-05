@@ -1,0 +1,145 @@
+using UnityEngine;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float jumpForce = 10f;
+    public KeyCode hitKey = KeyCode.Space;  // Press Space to swing the bat
+
+    private Rigidbody2D rb;
+    private bool isJumping = false;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+
+    void Update()
+    {
+        Move();
+        Hit();
+    }
+
+    void Move()
+    {
+        float moveX = Input.GetAxis("Horizontal");
+        Vector2 move = new Vector2(moveX * moveSpeed, rb.velocity.y);
+        rb.velocity = move;
+    }
+
+    void Hit()
+    {
+        if (Input.GetKeyDown(hitKey))
+        {
+            // Basic hit action, trigger a simple animation or effect
+            Debug.Log("Swing!");
+            // Add more complex hit logic here, e.g., bat animation, ball interaction
+        }
+    }
+
+    // Optional: Add jump logic for fielding (if needed)
+    void Jump()
+    {
+        if (!isJumping)
+        {
+            isJumping = true;
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        }
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        // Reset jump when player lands on the ground
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isJumping = false;
+        }
+    }
+}
+using UnityEngine;
+
+public class Pitching : MonoBehaviour
+{
+    public GameObject ballPrefab;
+    public float pitchSpeed = 10f;
+    public Transform pitchStartPosition;
+
+    private GameObject currentBall;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.P)) // Press 'P' to pitch the ball
+        {
+            PitchBall();
+        }
+    }
+
+    void PitchBall()
+    {
+        if (currentBall != null)
+        {
+            Destroy(currentBall); // Remove the previous ball
+        }
+
+        // Instantiate the new ball
+        currentBall = Instantiate(ballPrefab, pitchStartPosition.position, Quaternion.identity);
+        Rigidbody2D ballRb = currentBall.GetComponent<Rigidbody2D>();
+        ballRb.velocity = new Vector2(pitchSpeed, 0); // Simple rightward pitch
+    }
+}
+using UnityEngine;
+
+public class Ball : MonoBehaviour
+{
+    public float hitForce = 20f;
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // Check if the ball hits the bat
+        if (collision.gameObject.CompareTag("Bat"))
+        {
+            Rigidbody2D ballRb = GetComponent<Rigidbody2D>();
+            Vector2 hitDirection = collision.contacts[0].point - (Vector2)transform.position;
+            hitDirection.Normalize();
+            ballRb.AddForce(hitDirection * hitForce, ForceMode2D.Impulse);
+            Debug.Log("Ball Hit!");
+        }
+    }
+}
+using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    public GameObject player1;
+    public GameObject player2;
+    public GameObject ballPrefab;
+
+    private void Start()
+    {
+        // Set up the game, initialize score, etc.
+        ResetRound();
+    }
+
+    void ResetRound()
+    {
+        // Move players to starting positions
+        player1.transform.position = new Vector3(-10f, 0f, 0f);
+        player2.transform.position = new Vector3(10f, 0f, 0f);
+    }
+
+    void Update()
+    {
+        // Handle game round transitions, score tracking, etc.
+        // For example, switch turns between batting and fielding
+    }
+}
+// Simple fielding catch (this could go in PlayerMovement or a separate script)
+void OnTriggerEnter2D(Collider2D collider)
+{
+    if (collider.CompareTag("Ball"))
+    {
+        // Catch the ball (disable it, play animation, etc.)
+        Debug.Log("Caught the ball!");
+        Destroy(collider.gameObject); // Simulate catch
+    }
+}
